@@ -12,10 +12,10 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_PORT: int
-
+    POSTGRES_SERVER: str = "localhost" 
     DATABASE_URL: str  # SQLAlchemy URL
 
-    # --- Порты для Windows (или просто порты) ---
+    # --- Порты для бека + cloudbeaver ---
     BACKEND_PORT: int
     CLOUDBEAVER_PORT: int 
 
@@ -23,10 +23,13 @@ class Settings(BaseSettings):
     @computed_field
     @property 
     def postgres_link(self) -> PostgresDsn:
-        PostgresDsn.build(
-            schema = "public", 
-            username = self.POSTGRES_USER,
-            password = self.POSTGRES_PASSWORD, 
+        return PostgresDsn.build(
+            scheme="postgresql",  
+            username=self.POSTGRES_USER,
+            password=self.POSTGRES_PASSWORD,
+            host=self.POSTGRES_SERVER,
+            port=self.POSTGRES_PORT,
+            path=f"{self.POSTGRES_DB}",
         )
 
     model_config = ConfigDict(
