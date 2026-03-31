@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .auth-section, .todo-section {
+            padding: 30px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-completed {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .todo-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .todo-item:hover {
+            background: #e9ecef;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .todo-text {
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .todo-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .todo-description {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .todo-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-todo-form {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .user-email {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c00;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #c00;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Todo List</h1>
+            <p>Организуйте свои задачи эффективно</p>
+        </div>
+
+        <!-- Секция авторизации/регистрации -->
+        <div id="authSection" class="auth-section">
+            <div id="authError" class="error-message hidden"></div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="your@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" placeholder="Введите пароль">
+            </div>
+            
+            <button class="btn" onclick="registerUser()">Зарегистрироваться / Войти</button>
+        </div>
+
+        <!-- Секция задач -->
+        <div id="todoSection" class="todo-section hidden">
+            <div class="user-info">
+                <span class="user-email" id="userEmail"></span>
+                <button class="btn btn-small btn-danger" onclick="logout()">Выйти</button>
+            </div>
+
+            <div id="todoError" class="error-message hidden"></div>
+
+            <ul id="todoList" class="todo-list"></ul>
+
+            <div class="add-todo-form">
+                <div class="form-group">
+                    <label for="todoTitle">Новая задача</label>
+                    <input type="text" id="todoTitle" placeholder="Что нужно сделать?">
+                </div>
+                
+                <div class="form-group">
+                    <label for="todoDescription">Описание (необязательно)</label>
+                    <input type="text" id="todoDescription" placeholder="Детали задачи">
+                </div>
+                
+                <button class="btn" onclick="addTodo()">Добавить задачу</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let currentUser = null;
+
+        // Проверка сохраненного пользователя при загрузке
+        window.addEventListener('load', () => {
+            const savedUser = localStorage.getItem('todoUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showTodoSection();
+            }
+        });
+
+        // Регистрация/вход пользователя
+        async function registerUser() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showError('authError', 'Заполните все поля');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser = data;
+                    localStorage.setItem('todoUser', JSON.stringify(data));
+                    showTodoSection();
+                } else {
+                    showError('authError', data.detail || 'Ошибка регистрации');
+                }
+            } catch (error) {
+                showError('authError', 'Ошибка подключения к серверу');
+                console.error(error);
+            }
+        }
+
+        // Выход
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('todoUser');
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('todoSection').classList.add('hidden');
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Показать секцию задач
+        function showTodoSection() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('todoSection').classList.remove('hidden');
+            document.getElementById('userEmail').textContent = currentUser.email;
+            loadTodos();
+        }
+
+        // Загрузка задач
+        async function loadTodos() {
+            try {
+                const response = await fetch(`${API_URL}/users/${currentUser.id}/todos`);
+                
+                if (response.ok) {
+                    const todos = await response.json();
+                    renderTodos(todos);
+                } else {
+                    showError('todoError', 'Ошибка загрузки задач');
+                }
+            } catch (error) {
+                showError('todoError', 'Ошибка подключения к серверу');
+                console.error(error);
+            }
+        }
+
+        // Отрисовка задач
+        function renderTodos(todos) {
+            const todoList = document.getElementById('todoList');
+            
+            if (todos.length === 0) {
+                todoList.innerHTML = `
+                    <li class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 11l3 3L22 4"/>
+                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                        </svg>
+                        <p>Нет задач. Добавьте первую!</p>
+                    </li>
+                `;
+                return;
+            }
+
+            todoList.innerHTML = todos.map(todo => `
+                <li class="todo-item ${todo.is_completed ? 'completed' : ''}">
+                    <div class="todo-text">
+                        <div class="todo-title">${escapeHtml(todo.title)}</div>
+                        ${todo.description ? `<div class="todo-description">${escapeHtml(todo.description)}</div>` : ''}
+                    </div>
+                    <div class="todo-actions">
+                        <button class="btn btn-small ${todo.is_completed ? 'btn-completed' : 'btn-success'}" 
+                                onclick="toggleTodo(${todo.id})">
+                            ${todo.is_completed ? '✓' : '○'}
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteTodo(${todo.id})">
+                            ✕
+                        </button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Добавление задачи
+        async function addTodo() {
+            const title = document.getElementById('todoTitle').value.trim();
+            const description = document.getElementById('todoDescription').value.trim();
+
+            if (!title) {
+                showError('todoError', 'Введите название задачи');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/users/${currentUser.id}/todos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, description })
+                });
+
+                if (response.ok) {
+                    document.getElementById('todoTitle').value = '';
+                    document.getElementById('todoDescription').value = '';
+                    loadTodos();
+                } else {
+                    const data = await response.json();
+                    showError('todoError', data.detail || 'Ошибка добавления задачи');
+                }
+            } catch (error) {
+                showError('todoError', 'Ошибка подключения к серверу');
+                console.error(error);
+            }
+        }
+
+        // Переключение статуса задачи
+        async function toggleTodo(todoId) {
+            const todoItem = document.querySelector(`[onclick*="toggleTodo(${todoId})"]`).closest('.todo-item');
+            const isCompleted = todoItem.classList.contains('completed');
+
+            try {
+                const response = await fetch(`${API_URL}/users/${currentUser.id}/todos/${todoId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ is_completed: !isCompleted })
+                });
+
+                if (response.ok) {
+                    loadTodos();
+                } else {
+                    showError('todoError', 'Ошибка обновления задачи');
+                }
+            } catch (error) {
+                showError('todoError', 'Ошибка подключения к серверу');
+                console.error(error);
+            }
+        }
+
+        // Удаление задачи
+        async function deleteTodo(todoId) {
+            if (!confirm('Вы уверены, что хотите удалить эту задачу?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/users/${currentUser.id}/todos/${todoId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadTodos();
+                } else {
+                    showError('todoError', 'Ошибка удаления задачи');
+                }
+            } catch (error) {
+                showError('todoError', 'Ошибка подключения к серверу');
+                console.error(error);
+            }
+        }
+
+        // Показ ошибки
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+            setTimeout(() => {
+                errorElement.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Экранирование HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
